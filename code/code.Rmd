@@ -1,0 +1,375 @@
+---
+title: "eco433"
+author: "xxx"
+date: "09/04/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(expss)
+library(modelsummary)
+library(gridExtra) 
+library(MASS)
+```
+
+## R Markdown
+
+cps
+
+```{r}
+df = read.table("atuscps_2009.dat",header = TRUE, sep = ",")
+
+```
+
+
+```{r}
+summary(df$PESEX)
+
+```
+
+
+
+```{r}
+
+df1 = read.table("atussum_2021.dat",header = TRUE, sep = ",")
+```
+
+
+
+```{r}
+df2021 = df1%>%filter( TRTHH >0) %>% dplyr::select(TUCASEID,TRYHHCHILD,TEAGE,TESEX,TRTEC,TRTHH,TESPEMPNOT,TRSPFTPT,TESCHENR,TESCHLVL,TEMJOT,TRDPFTPT,TEHRUSLT) %>% mutate(recession = "2021")
+
+```
+
+
+
+
+```{r}
+
+df2 = read.table("atussum_2020.dat",header = TRUE, sep = ",")
+```
+
+
+
+```{r}
+df2020 = df2%>%filter(TRTHH >0) %>% dplyr::select(TUCASEID,TRYHHCHILD,TEAGE,TESEX,TRTEC,TRTHH,TESPEMPNOT,TRSPFTPT,TESCHENR,TESCHLVL,TEMJOT,TRDPFTPT,TEHRUSLT) %>% mutate(recession = "2020")
+
+```
+
+
+
+```{r}
+
+df3 = read.table("atussum_2019.dat",header = TRUE, sep = ",")
+```
+
+
+
+```{r}
+df2019 = df3%>%filter(TRTHH >0) %>% dplyr::select(TUCASEID,TRYHHCHILD,TEAGE,TESEX,TRTEC,TRTHH,TESPEMPNOT,TRSPFTPT,TESCHENR,TESCHLVL,TEMJOT,TRDPFTPT,TEHRUSLT) %>% mutate(recession = "2019")
+
+```
+
+
+combine
+
+```{r}
+df = rbind(df2019,df2020,df2021)
+```
+
+
+```{r}
+df = df%>%select(-TUCASEID)
+
+```
+
+
+
+```{r}
+t1 = df%>%group_by(recession)%>% summarise(num = n(),min = min(TRTHH),mean = round(mean(TRTHH),2),median=median(TRTHH),sd = round(sd(TRTHH),2),max = max(TRTHH))
+knitr::kable(t1)
+```
+
+
+
+
+```{r}
+t11 = df%>%filter(TESEX == "1")%>%group_by(recession)%>% summarise(num = n(),min = min(TRTHH),mean = round(mean(TRTHH),2),median=median(TRTHH),sd = round(sd(TRTHH),2),max = max(TRTHH))
+knitr::kable(t11)
+```
+
+
+
+```{r}
+t11 = df%>%filter(TESEX == "2")%>%group_by(recession)%>% summarise(num = n(),min = min(TRTHH),mean = round(mean(TRTHH),2),median=median(TRTHH),sd = round(sd(TRTHH),2),max = max(TRTHH))
+knitr::kable(t11)
+```
+
+
+
+
+
+
+
+effect on child care
+
+```{r}
+hist(df$TRTHH)
+boxplot(df$TRTHH~df$recession,xlab = "recession", ylab = "Childcare time")
+```
+TRDPFTPT,TESPEMPNOT
+
+
+
+
+```{r}
+df = df%>% mutate(recession = as.factor(recession), TESEX = as.factor(TESEX),LTRTHH = log(TRTHH))
+dfmodel1 = lm(TRTHH~recession,data = df)
+dfmodel2 = lm(TRTHH~recession + TEAGE  +  TESEX,data = df)
+dfmodel3 = lm(TRTHH~recession + TEAGE  +  TESEX + as.factor(TRDPFTPT) + as.factor(TESPEMPNOT),data = df)
+```
+
+
+```{r}
+summary(dfmodel3)
+```
+
+```{r, echo = FALSE,fig.cap="table"}
+huxtable::huxreg(dfmodel1,dfmodel2,dfmodel3)
+```
+
+
+```{r}
+plot(dfmodel3)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+effect on eldcare
+
+
+
+
+```{r}
+ef2021 = df1%>%filter(TRTEC >0) %>% dplyr::select(TUCASEID,TRYHHCHILD,TEAGE,TESEX,TRTEC,TRTHH,TESPEMPNOT,TRSPFTPT,TESCHENR,TESCHLVL,TEMJOT,TRDPFTPT,TEHRUSLT) %>% mutate(recession = "2021")
+
+```
+
+
+
+```{r}
+ef2020 = df2%>%filter(TRTEC >0) %>% dplyr::select(TUCASEID,TRYHHCHILD,TEAGE,TESEX,TRTEC,TRTHH,TESPEMPNOT,TRSPFTPT,TESCHENR,TESCHLVL,TEMJOT,TRDPFTPT,TEHRUSLT) %>% mutate(recession = "2020")
+
+```
+
+
+
+```{r}
+ef2019 = df3%>%filter(TRTEC >0) %>% dplyr::select(TUCASEID,TRYHHCHILD,TEAGE,TESEX,TRTEC,TRTHH,TESPEMPNOT,TRSPFTPT,TESCHENR,TESCHLVL,TEMJOT,TRDPFTPT,TEHRUSLT) %>% mutate(recession = "2019")
+
+```
+
+
+```{r}
+ef = rbind(ef2019,ef2020,ef2021)
+
+```
+
+
+
+```{r}
+t2 = ef%>%group_by(recession)%>% summarise(num = n(),min = min(TRTEC),mean = round(mean(TRTEC),2),median=median(TRTEC),sd = round(sd(TRTEC),2),max = max(TRTEC))
+knitr::kable(t2)
+```
+
+
+
+```{r}
+t21 = ef%>%filter(TESEX == "1")%>%group_by(recession)%>% summarise(num = n(),min = min(TRTEC),mean = round(mean(TRTEC),2),median=median(TRTEC),sd = round(sd(TRTEC),2),max = max(TRTEC))
+knitr::kable(t21)
+```
+
+
+```{r}
+t22 = ef%>%filter(TESEX == "2")%>%group_by(recession)%>% summarise(num = n(),min = min(TRTEC),mean = round(mean(TRTEC),2),median=median(TRTEC),sd = round(sd(TRTEC),2),max = max(TRTEC))
+knitr::kable(t22)
+```
+
+
+
+
+```{r}
+dfeldcare = ef
+hist(dfeldcare$TRTEC)
+boxplot(dfeldcare$TRTEC~dfeldcare$recession)
+
+```
+
+
+```{r}
+ef =ef%>% mutate(recession = as.factor(recession), TESEX = as.factor(TESEX))
+efmodel1 = lm(TRTEC~recession,data = ef)
+efmodel2 = lm(TRTEC~recession + TEAGE  +  TESEX,data = ef)
+efmodel3 = lm(TRTEC~recession + TEAGE  +  TESEX + as.factor(TRDPFTPT) + as.factor(TESPEMPNOT),data = ef)
+```
+
+
+
+
+```{r, echo = FALSE,fig.cap="table"}
+huxtable::huxreg(efmodel1,efmodel2,efmodel3)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+effect on all
+
+
+```{r}
+ff2021 = df1%>% dplyr::select(TUCASEID,TRYHHCHILD,TEAGE,TESEX,TRTEC,TRTHH,TESPEMPNOT,TRSPFTPT,TESCHENR,TESCHLVL,TEMJOT,TRDPFTPT,TEHRUSLT) %>% mutate(recession = "2019")
+
+```
+
+
+
+```{r}
+ff2020 = df2%>% dplyr::select(TUCASEID,TRYHHCHILD,TEAGE,TESEX,TRTEC,TRTHH,TESPEMPNOT,TRSPFTPT,TESCHENR,TESCHLVL,TEMJOT,TRDPFTPT,TEHRUSLT) %>% mutate(recession = "2020")
+
+```
+
+
+
+```{r}
+ff2019 = df3%>% dplyr::select(TUCASEID,TRYHHCHILD,TEAGE,TESEX,TRTEC,TRTHH,TESPEMPNOT,TRSPFTPT,TESCHENR,TESCHLVL,TEMJOT,TRDPFTPT,TEHRUSLT) %>% mutate(recession = "2021")
+
+```
+
+
+```{r}
+ff = rbind(ff2019,ff2020,ff2021)
+ff = ff%>%mutate(TALL = TRTEC + TRTHH) %>% filter(TALL >0)
+
+```
+
+
+
+
+```{r}
+hist(ff$TALL)
+boxplot(ff$TALL~ff$recession)
+
+```
+
+
+
+
+```{r}
+t3 = ff%>%group_by(recession)%>% summarise(num = n(),min = min(TALL),mean = round(mean(TALL),2),median=median(TALL),sd = round(sd(TALL),2),max = max(TALL))
+knitr::kable(t3)
+```
+
+
+
+
+```{r}
+t31 = ff%>%filter(TESEX == "1")%>%group_by(recession)%>% summarise(num = n(),min = min(TALL),mean = round(mean(TALL),2),median=median(TALL),sd = round(sd(TALL),2),max = max(TALL))
+knitr::kable(t31)
+```
+
+
+
+
+
+
+```{r}
+t32 = ff%>%filter(TESEX == "2")%>%group_by(recession)%>% summarise(num = n(),min = min(TALL),mean = round(mean(TALL),2),median=median(TALL),sd = round(sd(TALL),2),max = max(TALL))
+knitr::kable(t32)
+```
+
+
+
+```{r}
+ff =ff%>% mutate(recession = as.factor(recession), TESEX = as.factor(TESEX))
+ffmodel1 = lm(TALL~recession,data = ff)
+ffmodel2 = lm(TALL~recession + TEAGE  +  TESEX,data = ff)
+ffmodel3 = lm(TALL~recession + TEAGE  +  TESEX + as.factor(TRDPFTPT) + as.factor(TESPEMPNOT),data = ff)
+```
+
+
+```{r}
+
+```
+
+
+```{r, echo = FALSE,fig.cap="table"}
+huxtable::huxreg(ffmodel1,ffmodel2,ffmodel3)
+```
+
+
+```{r}
+table(df$TRDPFTPT)
+```
+
+
+atussum file
+
+TRYHHCHILD  child age , 
+
+TEAGE age, 
+TESEX sex, 
+TESPEMPNOT  Spouse’s employment status
+TRSPFTPT Spouse’s full time or part time employment status
+
+TRTEC Total time spent providing eldercare during diary day
+
+TRTHH Total time spent providing secondary childcare for household children during diary day
+
+TESCHENR School Enrollment
+
+TESCHLVL School Level
+
+
+TEMJOT Multiple job status
+TRDPFTPT  Full time or part time status
+TEHRUSLT  Usual weekly hours of work (total)
+
+
+
+
+
